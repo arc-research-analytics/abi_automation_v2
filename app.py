@@ -43,7 +43,7 @@ st.markdown(hide_default_format, unsafe_allow_html=True)
 
 # main title
 st.markdown(
-    "<p style='color:#000000; font-weight: 900; font-size: 46px'>Excel Cleaning Robot</p>", unsafe_allow_html=True)
+    "<p style='color:#000000; font-weight: 900; font-size: 46px'>Excel Cleaning Robot (version 2)</p>", unsafe_allow_html=True)
 
 # sub title
 st.markdown(
@@ -133,7 +133,7 @@ def clean_dataframe(df):
 def handle_upload():
 
     uploaded_files = st.file_uploader(
-        label="Upload Excel file(s) to be processed.",
+        label="Upload Excel file(s) to be processed:",
         accept_multiple_files=True
     )
 
