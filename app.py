@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import math
 import io
 import zipfile
 from datetime import datetime
@@ -65,66 +64,82 @@ def clean_dataframe(df):
     """
 
     # Extract values from specified cells
-    company_name = df.iloc[0, 1]
-    project_name = df.iloc[1, 1]
-    project_number = df.iloc[2, 1]
-    total_bid_amount = df.iloc[3, 1]
-    company_contact = df.iloc[21, 1]
-    contact_phone = df.iloc[22, 1]
-    contact_email = df.iloc[23, 1]
-    date = df.iloc[24, 1]
+    invoice_date = df.iloc[0, 1].strftime("%m/%d/%Y")
+    vendor_invoice_number = df.iloc[1, 1]
+    abi_contract_name = df.iloc[2, 1]
+    abi_contract_number = df.iloc[3, 1]
+    project_WO_name = df.iloc[4, 1]
+    abi_project_number = df.iloc[5, 1]
+
+    # special case for this value, which may be "N/A" in the spreadsheet
+    abi_WO_number = df.iloc[6, 1]
+    abi_WO_number = abi_WO_number if not pd.isna(abi_WO_number) else "N/A"
+
+    # rest of the values
+    total_contract_WO_amount = '${:,.2f}'.format(df.iloc[7, 1])
+    current_invoice_amount = '${:,.2f}'.format(df.iloc[8, 1])
+    abi_cost_code = df.iloc[9, 1]
+    prime_contract_vendor = df.iloc[10, 1]
 
     # Extract non-blank vendor/subcontractor values from Column 0 (first column)
-    contractor_names = df.iloc[6:19, 0].dropna().tolist()
+    vendor_subcontractor_names = df.iloc[13:32, 0].dropna().tolist()
 
     # Get the indices of rows that have non-blank values in the 'vendors' list
-    contractor_indices = df.iloc[6:19, 0].dropna().index
+    vendor_subcontractor_indices = df.iloc[13:32, 0].dropna().index
 
     # Extract corresponding values from the other columns using the same indices
-    certifying_agency = df.iloc[contractor_indices, 1].tolist()
-    certification = df.iloc[contractor_indices, 2].tolist()
-    race_ethnicity = df.iloc[contractor_indices, 3].tolist()
-    additional_DBE_groups = df.iloc[contractor_indices, 4].tolist()
-    description_of_work = df.iloc[contractor_indices, 5].tolist()
-    dollar_value = df.iloc[contractor_indices, 6].tolist()
+    certification = df.iloc[vendor_subcontractor_indices, 1].tolist()
+    race_ethnicity = df.iloc[vendor_subcontractor_indices, 2].tolist()
+    additional_DBE_types = df.iloc[vendor_subcontractor_indices, 3].tolist()
+    net_invoice_amount = ['${:,.2f}'.format(
+        item) for item in df.iloc[vendor_subcontractor_indices, 4].tolist()]
+    net_contracted_amount = ['${:,.2f}'.format(
+        item) for item in df.iloc[vendor_subcontractor_indices, 5].tolist()]
+    total_invoiced_toDate = ['${:,.2f}'.format(
+        item) for item in df.iloc[vendor_subcontractor_indices, 6].tolist()]
+    newly_added = df.iloc[vendor_subcontractor_indices, 7].tolist()
 
-    # st.write(f'dollar values: {dollar_value}')
+    # the total will be at the bottom of the table
+    invoice_total = '${:,.2f}'.format(df.iloc[33, 4])
 
     # Determine Prime/Sub based on matching values in "Prime Contract/Vendor" and "Vendor/Subcontractor"
     prime_sub_column = ["Prime" if vendor ==
-                        company_name else "Sub" for vendor in contractor_names]
+                        prime_contract_vendor else "Sub" for vendor in vendor_subcontractor_names]
 
     # Create a new DataFrame with the extracted values
     cleaned_df = pd.DataFrame({
-        "Company Name": [company_name] * len(contractor_names),
-        "Project Name": [project_name] * len(contractor_names),
-        "Project # (if applicable)": [project_number] * len(contractor_names),
-        "Total Bid Amount ($)": [total_bid_amount] * len(contractor_names),
-        "Primary & Subcontractor Names": contractor_names,
+        "Invoice Date": [invoice_date] * len(vendor_subcontractor_names),
+        "Vendor Invoice #": [vendor_invoice_number] * len(vendor_subcontractor_names),
+        "ABI Contract Name": [abi_contract_name] * len(vendor_subcontractor_names),
+        "ABI Contract #": [abi_contract_number] * len(vendor_subcontractor_names),
+        "Project or Work Order Name": [project_WO_name] * len(vendor_subcontractor_names),
+        "ABI Project #": [abi_project_number] * len(vendor_subcontractor_names),
+        "ABI Work Order #": [abi_WO_number] * len(vendor_subcontractor_names),
+        "Total Contract/Work Order Amt": [total_contract_WO_amount] * len(vendor_subcontractor_names),
+        "Current Invoice Amount": [current_invoice_amount] * len(vendor_subcontractor_names),
+        "ABI Cost Code #": [abi_cost_code] * len(vendor_subcontractor_names),
+        "Prime Contractor/Vendor": [prime_contract_vendor] * len(vendor_subcontractor_names),
+        "Vendor/Subcontractor": vendor_subcontractor_names,
         "Prime/Sub": prime_sub_column,
-        "Certifying Agency": certifying_agency,
         "Certification": certification,
         "Race/Ethnicity": race_ethnicity,
-        "Additional DBE Groups": additional_DBE_groups,
-        "Description of Work": description_of_work,
-        "$ Value": dollar_value,
-        "Company Contact": [company_contact] * len(contractor_indices),
-        "Contact Phone": [contact_phone] * len(contractor_indices),
-        "Contact Email": [contact_email] * len(contractor_indices),
-        "Date": [date] * len(contractor_indices),
+        "Additional DBE Types": additional_DBE_types,
+        "Net Invoice Amount ($)": net_invoice_amount,
+        "Net Contracted Amount ($)": net_contracted_amount,
+        "Total Invoiced to Date ($)": total_invoiced_toDate,
+        "Newly added?": newly_added,
+        "Invoice Total": [invoice_total] * len(vendor_subcontractor_names)
     })
 
     # fill in missing values
+    cleaned_df["Certification"] = cleaned_df["Certification"].fillna(
+        "N/A").replace("Select", "N/A")
     cleaned_df["Race/Ethnicity"] = cleaned_df["Race/Ethnicity"].fillna(
         "N/A").replace("Select", "N/A")
-    cleaned_df["Additional DBE Groups"] = cleaned_df["Additional DBE Groups"].fillna(
+    cleaned_df["Additional DBE Types"] = cleaned_df["Additional DBE Types"].fillna(
         "N/A").replace("Select", "N/A")
-    cleaned_df["Description of Work"] = cleaned_df["Description of Work"].fillna(
+    cleaned_df["Newly added?"] = cleaned_df["Newly added?"].fillna(
         "N/A").replace("Select", "N/A")
-
-    # Display extracted values
-    # st.write("Extracted values:")
-    # st.dataframe(cleaned_df)
 
     return cleaned_df
 
@@ -151,6 +166,9 @@ def handle_upload():
                 # Get the filename without extension
                 filename = file.name.split('.')[0]
 
+                # add filename as another column
+                cleaned_df['Original file name'] = filename
+
                 # Save cleaned dataframe with the original filename
                 cleaned_dataframes[filename] = cleaned_df
 
@@ -175,9 +193,6 @@ def handle_upload():
         with zipfile.ZipFile(buffer_zip, 'w') as zip_file:
             # Save each dataframe as a separate Excel file in the zip archive
             for filename, cleaned_df in cleaned_dataframes.items():
-                # Ensure "Invoice Date" is in date format without time
-                cleaned_df['Date'] = pd.to_datetime(
-                    cleaned_df['Date']).dt.date
 
                 excel_file = io.BytesIO()
                 with pd.ExcelWriter(excel_file, engine='xlsxwriter') as writer:
@@ -191,18 +206,18 @@ def handle_upload():
                     workbook = writer.book
                     worksheet = writer.sheets["Table 1"]
 
-                    # Define a date format in the "MM/DD/YYYY" format
-                    date_format = workbook.add_format(
-                        {'num_format': 'mm/dd/yyyy'})
+                    # # Define a date format in the "MM/DD/YYYY" format
+                    # date_format = workbook.add_format(
+                    #     {'num_format': 'mm/dd/yyyy'})
 
-                    # Define a currency format with dollar signs and thousands separators
-                    dollar_format = workbook.add_format(
-                        {'num_format': '$#,##0.00'})
+                    # # Define a currency format with dollar signs and thousands separators
+                    # dollar_format = workbook.add_format(
+                    #     {'num_format': '$#,##0.00'})
 
-                    # Set the number format for the specified columns
-                    worksheet.set_column("P:P", None, date_format)
-                    worksheet.set_column("D:D", None, dollar_format)
-                    worksheet.set_column("L:L", None, dollar_format)
+                    # # Set the number format for the specified columns
+                    # worksheet.set_column("P:P", None, date_format)
+                    # worksheet.set_column("D:D", None, dollar_format)
+                    # worksheet.set_column("L:L", None, dollar_format)
 
                     # autofit columns
                     worksheet.autofit()
@@ -212,7 +227,7 @@ def handle_upload():
 
                 excel_file.seek(0)
                 zip_file.writestr(
-                    f'{filename}.xlsx', excel_file.read())
+                    f'{filename}_clean.xlsx', excel_file.read())
 
                 number_of_files += 1  # increment the number of files
 
