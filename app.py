@@ -180,7 +180,7 @@ def handle_upload():
                 continue
 
         # Create a ZipFile object to store individual Excel files
-        tz = timezone("EST")
+        tz = timezone("America/Atlanta")
         timestamp = datetime.now(tz).strftime("%m-%d-%Y_%I.%M%p")
         zip_file_name = f"cleaned_files_{timestamp}.zip"
 
