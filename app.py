@@ -180,9 +180,9 @@ def handle_upload():
                 continue
 
         # Create a ZipFile object to store individual Excel files
-        est_timezone = pytz.timezone("US/Eastern")
-        timestamp = datetime.now(est_timezone).strftime("%m-%d-%Y_%I.%M%p")
-        zip_file_name = f"cleaned_files_{timestamp}.zip"
+        # est_timezone = pytz.timezone("US/Eastern")
+        # timestamp = datetime.now(est_timezone).strftime("%m-%d-%Y_%I.%M%p")
+        zip_file_name = f"cleaned_files.zip"
 
         buffer_zip = io.BytesIO()
 
@@ -205,19 +205,6 @@ def handle_upload():
                     # Get the xlsxwriter workbook and worksheet objects
                     workbook = writer.book
                     worksheet = writer.sheets["Table 1"]
-
-                    # # Define a date format in the "MM/DD/YYYY" format
-                    # date_format = workbook.add_format(
-                    #     {'num_format': 'mm/dd/yyyy'})
-
-                    # # Define a currency format with dollar signs and thousands separators
-                    # dollar_format = workbook.add_format(
-                    #     {'num_format': '$#,##0.00'})
-
-                    # # Set the number format for the specified columns
-                    # worksheet.set_column("P:P", None, date_format)
-                    # worksheet.set_column("D:D", None, dollar_format)
-                    # worksheet.set_column("L:L", None, dollar_format)
 
                     # autofit columns
                     worksheet.autofit()
