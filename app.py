@@ -181,8 +181,8 @@ def handle_upload():
 
         # Create a ZipFile object to store individual Excel files
         # est_timezone = pytz.timezone("US/Eastern")
-        # timestamp = datetime.now(est_timezone).strftime("%m-%d-%Y_%I.%M%p")
-        zip_file_name = f"cleaned_files.zip"
+        timestamp = datetime.now().strftime("%m-%d-%Y_%I.%M%p")
+        zip_file_name = f"cleaned_files_{timestamp}.zip"
 
         buffer_zip = io.BytesIO()
 
