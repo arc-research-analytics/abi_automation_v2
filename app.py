@@ -164,7 +164,9 @@ def handle_upload():
                 cleaned_df = clean_dataframe(df)
 
                 # Get the filename without extension
-                filename = file.name.split('.')[0]
+                filename = file.name
+                # unique_id = str(hash(file))
+                # filename = f"{file.name.split('.')[0]}_{unique_id}"
 
                 # add filename as another column
                 cleaned_df['Original file name'] = filename
