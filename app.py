@@ -165,8 +165,6 @@ def handle_upload():
 
                 # Get the filename without extension
                 filename = file.name
-                # unique_id = str(hash(file))
-                # filename = f"{file.name.split('.')[0]}_{unique_id}"
 
                 # add filename as another column
                 cleaned_df['Original file name'] = filename
@@ -196,6 +194,10 @@ def handle_upload():
             # Save each dataframe as a separate Excel file in the zip archive
             for filename, cleaned_df in cleaned_dataframes.items():
 
+                sendername = filename.split('@')[0]
+                vendorname = cleaned_df['Vendor/Subcontractor'].iloc[0].replace(
+                    ' ', '').replace('.', '').replace(',', '')
+                invoicenumber = cleaned_df['Vendor Invoice #'].iloc[0]
                 excel_file = io.BytesIO()
                 with pd.ExcelWriter(excel_file, engine='xlsxwriter') as writer:
                     cleaned_df.to_excel(
@@ -216,7 +218,7 @@ def handle_upload():
 
                 excel_file.seek(0)
                 zip_file.writestr(
-                    f'{filename}_clean.xlsx', excel_file.read())
+                    f'{sendername}_{vendorname}_{invoicenumber}_clean.xlsx', excel_file.read())
 
                 number_of_files += 1  # increment the number of files
 
