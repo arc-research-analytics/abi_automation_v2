@@ -194,7 +194,9 @@ def handle_upload():
             # Save each dataframe as a separate Excel file in the zip archive
             for filename, cleaned_df in cleaned_dataframes.items():
 
-                sendername = filename.split('@')[0]
+                # Remove file extension first, then extract sendername
+                filename_without_ext = filename.rsplit('.xlsx', 1)[0]
+                sendername = filename_without_ext.split('@')[0]
                 vendorname = cleaned_df['Vendor/Subcontractor'].iloc[0].replace(
                     ' ', '').replace('.', '').replace(',', '')
                 invoicenumber = cleaned_df['Vendor Invoice #'].iloc[0]
