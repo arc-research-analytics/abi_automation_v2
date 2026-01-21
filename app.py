@@ -194,12 +194,24 @@ def handle_upload():
             # Save each dataframe as a separate Excel file in the zip archive
             for filename, cleaned_df in cleaned_dataframes.items():
 
-                # Remove file extension first, then extract sendername
+                # Remove file extension first
                 filename_without_ext = filename.rsplit('.xlsx', 1)[0]
-                sendername = filename_without_ext.split('@')[0]
-                vendorname = cleaned_df['Vendor/Subcontractor'].iloc[0].replace(
-                    ' ', '').replace('.', '').replace(',', '')
+
+                # Strip @ symbol if present and get up to second underscore
+                filename_clean = filename_without_ext.lstrip('@')
+                parts = filename_clean.split('_')
+                # Take first two parts (e.g., 'jsalazar', '20250929')
+                prefix = '_'.join(parts[:2]) if len(parts) >= 2 else filename_clean
+
+                # Get prime vendor name and remove all non-alphanumeric characters
+                prime_vendor = cleaned_df['Prime Contractor/Vendor'].iloc[0]
+                prime_vendor_clean = ''.join(c for c in prime_vendor if c.isalnum())
+                # Limit to first 20 characters
+                prime_vendor_clean = prime_vendor_clean[:20]
+
+                # Get invoice number
                 invoicenumber = cleaned_df['Vendor Invoice #'].iloc[0]
+
                 excel_file = io.BytesIO()
                 with pd.ExcelWriter(excel_file, engine='xlsxwriter') as writer:
                     cleaned_df.to_excel(
@@ -220,7 +232,7 @@ def handle_upload():
 
                 excel_file.seek(0)
                 zip_file.writestr(
-                    f'{sendername}_{vendorname}_{invoicenumber}_clean.xlsx', excel_file.read())
+                    f'{prefix}_{prime_vendor_clean}_{invoicenumber}.xlsx', excel_file.read())
 
                 number_of_files += 1  # increment the number of files
 
