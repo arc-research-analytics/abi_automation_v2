@@ -8,7 +8,7 @@ This is a Streamlit web application nicknamed "T-1000" that automates the cleani
 
 ## Application Architecture
 
-**Single-file application**: The entire application logic is contained in `app.py` (250 lines), making this a straightforward single-module Streamlit app.
+**Single-file application**: The entire application logic is contained in `app.py` (~264 lines), making this a straightforward single-module Streamlit app.
 
 **Core workflow**:
 1. Users upload multiple Excel invoice files via Streamlit file uploader
@@ -24,10 +24,10 @@ This is a Streamlit web application nicknamed "T-1000" that automates the cleani
 - Financial values are formatted with currency symbols and thousand separators
 - "Prime/Sub" classification is determined by matching vendor names against the prime contractor field
 
-**File naming convention**: Output files are constructed from three components split by underscores:
-- Sender name: extracted from original filename before '@' symbol (`filename.split('@')[0]`)
-- Vendor name: from first row's vendor field, with spaces/periods/commas removed
-- Invoice number: from the vendor invoice metadata field
+**File naming convention**: Output files are named `{prefix}_{primevendor}_{invoicenumber}.xlsx` using three components:
+- Prefix: leading `@` is stripped from the original filename, then the first two underscore-delimited parts are joined (e.g., `jsalazar_20250929`)
+- Prime vendor name: taken from the `Prime Contractor/Vendor` field, all non-alphanumeric characters removed, truncated to 20 characters
+- Invoice number: from the `Vendor Invoice #` metadata field
 
 ## Development Commands
 
@@ -50,6 +50,7 @@ pip install -r requirements.txt
 - `pandas==2.1.4` - Data processing
 - `openpyxl==3.1.2` - Reading Excel files
 - `xlsxwriter==3.1.9` - Writing Excel files with autofit columns
+- `Pillow` - Rendering the ABI logo image (`Content/abi_2.png`)
 - `pytz==2024.2` - Eastern timezone timestamps for zip filenames
 
 **Custom styling**: CSS is injected via `st.markdown()` to hide default Streamlit UI elements (footer, menu, sidebar toggle) and apply custom color scheme matching ABI branding (blue: `#005cb9`).
